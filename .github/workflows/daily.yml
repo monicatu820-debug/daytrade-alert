@@ -1,8 +1,9 @@
-name: daily-screener
+name: daily-daytrade-plan
 
 on:
   schedule:
-    - cron: "30 0 * * 1-5"   # 台北 08:30 週一至週五
+    # GitHub Actions cron 為 UTC。23:30 UTC(週日至週四) = 台北 07:30(週一至週五), 08:30 前完成
+    - cron: "30 23 * * 0-4"
   workflow_dispatch:
 
 permissions:
@@ -18,19 +19,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install requests pandas
+      - run: pip install requests urllib3
 
-      - name: Run screener
+      - name: Run daytrade plan
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: python screener.py
+        run: python daytrade_plan.py
 
-      - name: Commit index.html
+      - name: Commit output
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add index.html history.csv
-          git commit -m "update $(date +'%Y-%m-%d')" || echo "no changes"
+          git add index.html plan.md || true
+          git commit -m "plan $(date +'%Y-%m-%d')" || echo "no changes"
           git push
